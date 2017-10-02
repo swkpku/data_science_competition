@@ -54,11 +54,11 @@ class CdiscountDataset(Dataset):
         if self.transform:
             img = self.transform(img)
             
-        target = -1    
+        target = -1
         if self.with_label:
             target = image_row["category_idx"].item()
 
-        return img, target
+        return img, target, product_id
 
 def get_cdiscount_dataset(offsets_csv, images_csv, with_label, resize):
     return CdiscountDataset(offsets_csv=offsets_csv,
