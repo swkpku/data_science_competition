@@ -1,6 +1,8 @@
 import time, os
 import torch
 import shutil
+import visdom
+import numpy as np
 
 class AverageMeter(object):
     def __init__(self):
@@ -26,6 +28,10 @@ class Trainer():
         self.model = model
         self.criterion = criterion
         self.config = config
+        
+        self.viz = visdom.Visdom()
+        self.loss_viz = self.viz.line(Y=np.array([9]), X=np.array([0]))
+        self.acc_viz = self.viz.line(Y=np.array([0]), X=np.array([0]))
         
         if (self.config['optimizer'] == 'Adam'):
             self.optimizer = torch.optim.Adam(self.model.parameters(), 
@@ -72,7 +78,7 @@ class Trainer():
         self.model.train()
 
         end = time.time()
-        for i, (img, target) in enumerate(self.train_dataloader):
+        for i, (img, target, _) in enumerate(self.train_dataloader):
             # calculate the iteration number throughout whole training process
             total_iter = epoch * len(self.train_dataloader) + i
             
@@ -103,6 +109,21 @@ class Trainer():
             # measure elapsed time
             batch_time.update(time.time() - end)
             end = time.time()
+            
+            # visulization
+            self.viz.line(
+                Y=np.array([losses.val]),
+                X=np.array([total_iter]),
+                win=self.loss_viz,
+                update="append"
+            )
+            
+            self.viz.line(
+                Y=np.array([top1.val]),
+                X=np.array([total_iter]),
+                win=self.acc_viz,
+                update="append"
+            )
 
             if i % self.config['print_freq'] == 0:
                 print('Epoch: [{0}][{1}/{2}]\t'

@@ -6,8 +6,6 @@ from torchvision import transforms
 from io import BytesIO
 import bson
 
-bson_file_path = "/mnt/data/cdiscount/train.bson"
-
 class Rescale(object):
     def __init__(self, output_size):
         assert isinstance(output_size, (int, tuple))
@@ -60,7 +58,7 @@ class CdiscountDataset(Dataset):
 
         return img, target, product_id
 
-def get_cdiscount_dataset(offsets_csv, images_csv, with_label, resize):
+def get_cdiscount_dataset(offsets_csv, images_csv, bson_file_path, with_label, resize):
     return CdiscountDataset(offsets_csv=offsets_csv,
                             images_csv=images_csv,
                             bson_file_path=bson_file_path,

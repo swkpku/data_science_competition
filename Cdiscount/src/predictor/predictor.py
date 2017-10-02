@@ -4,11 +4,14 @@ import csv
         
 class Predictor():
     def __init__(self, test_dataloader, model, config):
-        self.test_dataloader = train_dataloader
+        self.test_dataloader = test_dataloader
         self.model = model
         self.config = config
         
-    def run(self, epoch):
+        # cut the classifier layer
+        self.model = torch.nn.Sequential(*list(model.children())[:-1])
+        
+    def run(self):
         torch.backends.cudnn.benchmark = True # uses the inbuilt cudnn auto-tuner to find the fastest convolution algorithms.
                                               # If this is set to false, uses some in-built heuristics that might not always be fastest.
         
@@ -22,7 +25,7 @@ class Predictor():
         # prediction
         print("start prediction")
         end = time.time()
-        for img, _, prod_id in self.test_dataloader:
+        for i, (img, _, prod_id) in enumerate(self.test_dataloader):
             # measure data loading time
             data_time = time.time() - end
             input_var = torch.autograd.Variable(img)
@@ -39,10 +42,10 @@ class Predictor():
             end = time.time()
 
             if i % self.config['print_freq'] == 0:
-                print('Epoch: [{0}][{1}/{2}]\t'
-                      'Time {batch_time.val:.3f} ({batch_time.avg:.3f})\t'
-                      'Data {data_time.val:.3f} ({data_time.avg:.3f})\t'.format(
-                       epoch, i, len(self.test_dataloader), batch_time=batch_time,
+                print('Iter: [{0}/{1}]\t'
+                      'Time {batch_time:.3f}\t'
+                      'Data {data_time:.3f}\t'.format(
+                       i, len(self.test_dataloader), batch_time=batch_time,
                        data_time=data_time))
 
         with open(self.config['pred_filename'], "w") as outfile:
