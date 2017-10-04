@@ -45,16 +45,23 @@ class Trainer():
     def run(self):
         # optionally resume from a checkpoint
         resume = self.config['resume']
+        start_iter = 0
         if resume:
             if os.path.isfile(resume):
                 print("=> loading checkpoint '{}'".format(resume))
                 checkpoint = torch.load(resume)
+                
                 self.config['start_epoch'] = checkpoint['epoch']
                 self.config['best_val_prec1'] = checkpoint['best_val_prec1']
                 self.model.load_state_dict(checkpoint['state_dict'])
                 self.optimizer.load_state_dict(checkpoint['optimizer'])
-                print("=> loaded checkpoint '{}' (epoch {})"
-                      .format(resume, checkpoint['epoch']))
+                start_iter = checkpoint['iter']
+                
+                print("=> loaded checkpoint '{}' (epoch {}) (iter {})"
+                      .format(resume, checkpoint['epoch'], checkpoint['iter']))
+                
+                # the checkpoint could be quiet huge, so just delete them to save some GPU memory
+                del checkpoint
             else:
                 print("=> no checkpoint found at '{}'".format(resume))
 
@@ -64,10 +71,10 @@ class Trainer():
         # train
         print("start training")
         for epoch in range(self.config['start_epoch'], self.config['epochs']):
-            self._train(epoch)
+            self._train(epoch, start_iter)
 
         
-    def _train(self, epoch):
+    def _train(self, epoch, start_iter):
         batch_time = AverageMeter()
         data_time = AverageMeter()
         losses = AverageMeter()
@@ -79,6 +86,10 @@ class Trainer():
 
         end = time.time()
         for i, (img, target, _) in enumerate(self.train_dataloader):
+            # start from the specified iteration
+            if i < start_iter:
+                continue
+            
             # calculate the iteration number throughout whole training process
             total_iter = epoch * len(self.train_dataloader) + i
             

@@ -25,3 +25,10 @@ def assemble_model(model, cut, fin, num_classes):
     
     # return the assembled model
     return AssembledModel(model, classifier)
+
+def assemble_model_with_classifier(model, cut, classifier):
+    # cut the classifier layer
+    model = torch.nn.Sequential(*list(model.children())[:cut])
+    
+    # return the assembled model
+    return AssembledModel(model, classifier)
