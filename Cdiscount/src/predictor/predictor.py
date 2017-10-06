@@ -1,6 +1,8 @@
 import time
 import torch
 import csv
+import numpy as np
+import visdom
         
 class Predictor():
     def __init__(self, test_dataloader, model, config):
@@ -8,8 +10,9 @@ class Predictor():
         self.model = model
         self.config = config
         
-        # cut the classifier layer
-        self.model = torch.nn.Sequential(*list(model.children())[:-1])
+        # visualizer
+        self.viz = visdom.Visdom()
+        self.iter_viz = self.viz.line(Y=np.array([0]), X=np.array([0]))
         
     def run(self):
         torch.backends.cudnn.benchmark = True # uses the inbuilt cudnn auto-tuner to find the fastest convolution algorithms.
@@ -17,29 +20,35 @@ class Predictor():
         
         # switch to evaluate mode
         self.model.eval()
-
-        # prediction result
-        prod_ids = []
-        predictions = []
+        
+        outfile = open(self.config['pred_filename'], "w")
         
         # prediction
         print("start prediction")
         end = time.time()
-        for i, (img, _, prod_id) in enumerate(self.test_dataloader):
+        for i, (imgs, _, prod_ids) in enumerate(self.test_dataloader):
             # measure data loading time
             data_time = time.time() - end
-            input_var = torch.autograd.Variable(img)
+            input_var = torch.autograd.Variable(imgs)
 
             # compute output
             output = self.model(input_var)
-            _, predicted = torch.max(output.data, 1)
+            _, predicts = torch.max(output.data, 1)
 
-            prod_ids.append(prod_id)
-            predictions.append(predicted)
+            for prod_id, predict in zip(prod_ids, predicts):
+                outfile.write("%d,%d\n" % (prod_id, predict))
             
             # measure elapsed time
             batch_time = time.time() - end
             end = time.time()
+            
+            # visulization
+            self.viz.line(
+                Y=np.array([(i+1)*self.config['test_batch_size']]),
+                X=np.array([i+1]),
+                win=self.iter_viz,
+                update="append"
+            )
 
             if i % self.config['print_freq'] == 0:
                 print('Iter: [{0}/{1}]\t'
@@ -47,11 +56,9 @@ class Predictor():
                       'Data {data_time:.3f}\t'.format(
                        i, len(self.test_dataloader), batch_time=batch_time,
                        data_time=data_time))
-
-        with open(self.config['pred_filename'], "w") as outfile:
-            csvwriter = csv.writer(outfile)
-            csvwriter.writerows(zip(prod_ids, predictions))   
-
+                
+        outfile.close()
+        
     
 def get_predictor(test_dataloader, model, config):
     return Predictor(test_dataloader, model, config)

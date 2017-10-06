@@ -87,8 +87,12 @@ class Trainer():
         end = time.time()
         for i, (img, target, _) in enumerate(self.train_dataloader):
             # start from the specified iteration
-            if i < start_iter:
-                continue
+            i = i + start_iter
+            
+            #if i < start_iter:
+            #    if i % self.config['print_freq']:
+            #        print("skip iter %d" % i)
+            #    continue
             
             # calculate the iteration number throughout whole training process
             total_iter = epoch * len(self.train_dataloader) + i
