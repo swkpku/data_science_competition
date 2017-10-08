@@ -29,7 +29,7 @@ class Predictor():
         for i, (imgs, _, prod_ids) in enumerate(self.test_dataloader):
             # measure data loading time
             data_time = time.time() - end
-            input_var = torch.autograd.Variable(imgs)
+            input_var = torch.autograd.Variable(imgs, volatile=True)
 
             # compute output
             output = self.model(input_var)
