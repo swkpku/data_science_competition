@@ -1,0 +1,33 @@
+setups:
+
+Install Driver
+1. Download K80 driver: http://www.nvidia.com/download/driverResults.aspx/124729/en-us
+2. sudo dpkg -i <the driver file you just downloaded>.deb
+3. sudo apt-get update
+4. sudo apt-get install cuda-drivers
+5. reboot
+
+Install CUDA:
+1. download CUDA: https://developer.nvidia.com/cuda-downloads?target_os=Linux&target_arch=x86_64&target_distro=Ubuntu&target_version=1604&target_type=runfilelocal
+2. sudo sh <cuda you just downloaded>.run --override
+
+Install CuDNN:
+1. Download CuDNN (need Nvidia account)
+2. follow the instructions from official website
+
+Install Python3
+
+Install PyTorch
+
+Install Jupyter notebook
+
+Start Jupyter Server
+http://jupyter-notebook.readthedocs.io/en/stable/public_server.html
+
+Install Visdom
+
+Start Visdom Server
+
+Install kaggle-cli
+1. pip install kaggle-cli
+2. kg download -u <username> -p <password> -c cdiscount-image-classification-challenge
