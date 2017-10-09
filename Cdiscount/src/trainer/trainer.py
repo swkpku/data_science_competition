@@ -30,11 +30,15 @@ class Trainer():
         self.config = config
         
         self.viz = visdom.Visdom()
-        self.loss_viz = self.viz.line(Y=np.array([9]), X=np.array([0]))
-        self.acc_viz = self.viz.line(Y=np.array([0]), X=np.array([0]))
+        self.loss_val_viz = self.viz.line(Y=np.array([0]), X=np.array([0]))
+        self.acc_val_viz = self.viz.line(Y=np.array([0]), X=np.array([0]))
+        self.loss_avg_viz = self.viz.line(Y=np.array([0]), X=np.array([0]))
+        self.acc_avg_viz = self.viz.line(Y=np.array([0]), X=np.array([0]))
+        
+        self.val_acc_viz = self.viz.line(Y=np.array([0]), X=np.array([0]))
         
         if (self.config['optimizer'] == 'Adam'):
-            self.optimizer = torch.optim.Adam(self.model.parameters(), 
+            self.optimizer = torch.optim.Adam(filter(lambda p: p.requires_grad, self.model.parameters()), 
                                           lr = self.config['learning_rate'],
                                           weight_decay=self.config['weight_decay'])
         else:
@@ -129,14 +133,28 @@ class Trainer():
             self.viz.line(
                 Y=np.array([losses.val]),
                 X=np.array([total_iter]),
-                win=self.loss_viz,
+                win=self.loss_val_viz,
+                update="append"
+            )
+            
+            self.viz.line(
+                Y=np.array([losses.avg]),
+                X=np.array([total_iter]),
+                win=self.loss_avg_viz,
                 update="append"
             )
             
             self.viz.line(
                 Y=np.array([top1.val]),
                 X=np.array([total_iter]),
-                win=self.acc_viz,
+                win=self.acc_val_viz,
+                update="append"
+            )
+            
+            self.viz.line(
+                Y=np.array([top1.avg]),
+                X=np.array([total_iter]),
+                win=self.acc_avg_viz,
                 update="append"
             )
 
@@ -152,6 +170,13 @@ class Trainer():
             
             if i != 0 and i % self.config['validate_freq'] == 0:
                 prec1 = self._validate(self.val_dataloader)
+                
+                self.viz.line(
+                    Y=np.array([prec1]),
+                    X=np.array([total_iter]),
+                    win=self.val_acc_viz,
+                    update="append"
+                )
 
                 # remember best prec@1 and save checkpoint
                 is_best = prec1 > self.config['best_val_prec1']
@@ -191,7 +216,7 @@ class Trainer():
         self.model.eval()
 
         end = time.time()
-        for i, (img, target) in enumerate(self.val_dataloader):
+        for i, (img, target, _) in enumerate(self.val_dataloader):
             target = target.cuda(async=True)
             input_var = torch.autograd.Variable(img, volatile=True)
             target_var = torch.autograd.Variable(target, volatile=True)
