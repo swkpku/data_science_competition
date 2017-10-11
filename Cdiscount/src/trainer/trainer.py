@@ -4,6 +4,8 @@ import shutil
 import visdom
 import numpy as np
 
+import matplotlib.pyplot as plt
+
 class AverageMeter(object):
     def __init__(self):
         self.reset()
@@ -40,6 +42,11 @@ class Trainer():
         if (self.config['optimizer'] == 'Adam'):
             self.optimizer = torch.optim.Adam(filter(lambda p: p.requires_grad, self.model.parameters()), 
                                           lr = self.config['learning_rate'],
+                                          weight_decay=self.config['weight_decay'])
+        elif (self.config['optimizer'] == 'SGD'):
+            self.optimizer = torch.optim.SGD(filter(lambda p: p.requires_grad, self.model.parameters()), 
+                                          lr = self.config['learning_rate'],
+                                          momentum = self.config['momentum'],
                                           weight_decay=self.config['weight_decay'])
         else:
             raise ValueError("optimizer not support.")

@@ -5,6 +5,7 @@ from skimage import io, transform
 from torchvision import transforms
 from io import BytesIO
 import bson
+from PIL import Image
 
 class Rescale(object):
     def __init__(self, output_size):
@@ -12,7 +13,9 @@ class Rescale(object):
         self.output_size = output_size
 
     def __call__(self, sample):
+        print(sample.shape)
         img = transform.resize(sample, (self.output_size, self.output_size))
+        print(img.shape)
         return img
     
 class ToTensor(object):
@@ -47,7 +50,7 @@ class CdiscountDataset(Dataset):
         item = bson.BSON.decode(item_data)
         img_idx = image_row["img_idx"]
         bson_img = item["imgs"][img_idx]["picture"]
-        img = io.imread(BytesIO(bson_img))
+        img = Image.open(BytesIO(bson_img))
         
         if self.transform:
             img = self.transform(img)
@@ -64,7 +67,19 @@ def get_cdiscount_dataset(offsets_csv, images_csv, bson_file_path, with_label, r
                             bson_file_path=bson_file_path,
                             with_label=with_label,
                             transform=transforms.Compose([
-                                Rescale(resize),
+                                transforms.RandomSizedCrop(resize),
+                                transforms.RandomHorizontalFlip(),
+                                transforms.ToTensor()
+                            ]))
+
+def get_cdiscount_testset(offsets_csv, images_csv, bson_file_path, with_label, resize):
+    return CdiscountDataset(offsets_csv=offsets_csv,
+                            images_csv=images_csv,
+                            bson_file_path=bson_file_path,
+                            with_label=with_label,
+                            transform=transforms.Compose([
+                                Rescale(256),
+                                transforms.TenCrop(resize, vertical_flip=True),
                                 ToTensor()
                             ]))
     
