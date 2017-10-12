@@ -82,4 +82,15 @@ def get_cdiscount_testset(offsets_csv, images_csv, bson_file_path, with_label, r
                                 transforms.TenCrop(resize, vertical_flip=True),
                                 ToTensor()
                             ]))
+
+def get_cdiscount_testset(offsets_csv, images_csv, bson_file_path, with_label, resize):
+    return CdiscountDataset(offsets_csv=offsets_csv,
+                            images_csv=images_csv,
+                            bson_file_path=bson_file_path,
+                            with_label=with_label,
+                            transform=transforms.Compose([
+                                Rescale(256),
+                                transforms.TenCrop(resize, vertical_flip=True),
+                                ToTensor()
+                            ]))
     
