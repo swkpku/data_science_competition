@@ -261,6 +261,8 @@ class Trainer():
     def _adjust_learning_rate(self, total_iter, decay_lr_freq):
         """Sets the learning rate to the initial LR decayed by 10 every 1e4 iterations"""
         decay_rate = total_iter // decay_lr_freq
+        if (decay_rate > 2):
+            decay_rate = 2
         if (decay_rate != self.decay_rate):
             self.decay_rate = decay_rate
             print('adjust learning rate, decay_rate = %d' % self.decay_rate)
