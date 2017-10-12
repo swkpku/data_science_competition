@@ -29,14 +29,16 @@ class Predictor():
         for i, (imgs, _, prod_ids) in enumerate(self.test_dataloader):
             # measure data loading time
             data_time = time.time() - end
-            input_var = torch.autograd.Variable(imgs, volatile=True)
+            
+            for img_i in imgs:
+                input_var = torch.autograd.Variable(img_i, volatile=True)
 
-            # compute output
-            output = self.model(input_var)
-            _, predicts = torch.max(output.data, 1)
+                # compute output
+                output = self.model(input_var)
+                _, predicts = torch.max(output.data, 1)
 
-            for prod_id, predict in zip(prod_ids, predicts):
-                outfile.write("%d,%d\n" % (prod_id, predict))
+                for prod_id, predict in zip(prod_ids, predicts):
+                    outfile.write("%d,%d\n" % (prod_id, predict))
             
             # measure elapsed time
             batch_time = time.time() - end
